@@ -60,8 +60,8 @@ public class Clone_Subject implements Observable {
 		checkMasterSocket.setSoTimeout(3000);
 		
 		checkExistingMasters();
-				
-		switch(whoAmI){
+        System.out.println(whoAmI);
+        switch(whoAmI){
 			case SUBJECT:
 				serverSocket = new ServerSocket(port);
 							for (int i = 0; i < numPoints; i++) {
@@ -538,29 +538,27 @@ public class Clone_Subject implements Observable {
 
 		try {
 
-			DatagramSocket dSock = new DatagramSocket();
-			dSock.setBroadcast(true);
-			
-			CheckMasterMessage message = new CheckMasterMessage();
-			message.setIP(InetAddress.getLocalHost().getHostAddress());
-			message.setType(CheckMasterMessage.CHECK);
-			
-			InetAddress group = InetAddress.getByName("200.239.139.255");
-			
-			ByteArrayOutputStream byteStream = new ByteArrayOutputStream(5000);
-			ObjectOutputStream os = new ObjectOutputStream(new BufferedOutputStream(byteStream));
-			os.flush();
-			os.writeObject(message);
+            DatagramSocket dSock = new DatagramSocket(checkMasterPort,InetAddress.getByName("200.239.139.255") );
+            dSock.setBroadcast(true);
 
-			byte[] sendBuffer = byteStream.toByteArray();
-			
-			DatagramPacket packet = new DatagramPacket(sendBuffer,
-					sendBuffer.length,
-					group,
-					checkMasterPort);
-			
- 			dSock.send(packet);
-		    os.close();
+            CheckMasterMessage message = new CheckMasterMessage();
+            message.setIP(InetAddress.getLocalHost().getHostAddress());
+            message.setType(CheckMasterMessage.CHECK);
+
+            InetAddress group = InetAddress.getByName("200.239.139.255");
+
+            ByteArrayOutputStream byteStream = new ByteArrayOutputStream(5000);
+            ObjectOutputStream os = new ObjectOutputStream(new BufferedOutputStream(byteStream));
+            os.flush();
+            os.writeObject(message);
+            os.flush();
+
+            byte[] sendBuffer = byteStream.toByteArray();
+
+            DatagramPacket packet = new DatagramPacket(sendBuffer, sendBuffer.length,group,checkMasterPort);
+
+            dSock.send(packet);
+            os.close();
 
 		    try{
 
