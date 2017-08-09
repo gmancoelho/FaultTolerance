@@ -323,15 +323,16 @@ public class Clone_Subject implements Observable {
 						    {
 						      System.err.println("Exception:  " + e);
 						      e.printStackTrace();
+
 						    }
 							catch (ClassNotFoundException e){
 								System.err.println("Exception:  " + e);
 								e.printStackTrace();
-							}
+
+                            }
 					}
 				}
 			}.start();
-			//dsocket.close();
 	}
 	
 	/**
@@ -526,8 +527,8 @@ public class Clone_Subject implements Observable {
 			
 			s.close();	
 		} catch (IOException e) {
-			System.out.println("Sem conexão com o clone!");
-			if(observers.size() != 0)
+            System.out.println("Sem conexão com o clone!");
+            if(observers.size() != 0)
 				myInstance.notifyObservers(UPDATE);
 		}
 	}
@@ -538,7 +539,7 @@ public class Clone_Subject implements Observable {
 
 		try {
 
-            DatagramSocket dSock = new DatagramSocket(checkMasterPort,InetAddress.getByName("200.239.139.255") );
+            DatagramSocket dSock = new DatagramSocket ();
             dSock.setBroadcast(true);
 
             CheckMasterMessage message = new CheckMasterMessage();
@@ -576,13 +577,12 @@ public class Clone_Subject implements Observable {
 				whoAmI = SUBJECT;
 			} catch (Exception e){
 				e.printStackTrace();
-			}
-		    dSock.close();
-		    
+            }
+
 		} catch (IOException e) {
 			System.out.println("Erro ao enviar pacote");
 			e.printStackTrace();
-		}
+        }
 	}
 	
 	/**
