@@ -23,6 +23,8 @@ public class Clone_Subject implements Observable {
 	private static List<Point> 			newPoints;
 	private static List<Integer> 		toRemove;
 	private static List<String> 		observers;
+	private static List<String> 		clones;
+
 	private static int 					numPoints = 300;
 	private static final int 			minimum = 50;
 	private static final int 			maximum = 100;
@@ -40,13 +42,13 @@ public class Clone_Subject implements Observable {
 	private static Thread 				threadClone;
 	private static String 				masterIp;
 	private static String 				cloneIp;
-	private static long 				timeLastMessageMaster; 
-	private static int 					whoAmI; 
+	private static long 				timeLastMessageMaster;
+	private static int 					whoAmI;
 	private static final int 			UPDATE = 0;
 	private static final int 			NEWMASTER = 1;
-	
-	public Clone_Subject() throws IOException{
 
+	public Clone_Subject() throws IOException{
+		clones 			= Collections.synchronizedList(new ArrayList<String>());
 		observers 			= Collections.synchronizedList(new ArrayList<String>());
 		points 				= Collections.synchronizedList(new ArrayList<Point>());
 		newPoints 			= new ArrayList<Point>();
@@ -54,42 +56,45 @@ public class Clone_Subject implements Observable {
 		random 				= new Random();
 		masterIp			= null;
 		cloneIp				= null;
+
 		checkMasterSocket 	= new ServerSocket(checkMasterPort);
-		whoAmI  			= CLONE;
+
 		checkMasterSocket.setSoTimeout(3000);
-		
+
 		checkExistingMasters();
-				
+		System.out.println(whoAmI);
 		switch(whoAmI){
-			case SUBJECT: 	serverSocket = new ServerSocket(port);
-							for (int i = 0; i < numPoints; i++) {
-								Point point = new Point();
-								int x = random.nextInt(1000);
-								int y = random.nextInt(1000);
-								int cor = random.nextInt(5);
-								point.setX(x);
-								point.setY(y);
-								point.setCor(cor);
-								points.add(point);
-							}
-							threadMaster = new Thread(){
-								@Override
-								public void run(){
-									startMaster();
-								}
-							};
-							threadMaster.start();
-							break;
-							
-			case CLONE: 	serverSocket = new ServerSocket(port);
-							threadClone = new Thread(){
-								@Override
-								public void run(){
-									startClone();
-								}
-							};
-							threadClone.start();
-							break;
+			case SUBJECT:
+				serverSocket = new ServerSocket(port);
+				for (int i = 0; i < numPoints; i++) {
+					Point point = new Point();
+					int x = random.nextInt(1000);
+					int y = random.nextInt(1000);
+					int cor = random.nextInt(5);
+					point.setX(x);
+					point.setY(y);
+					point.setCor(cor);
+					points.add(point);
+				}
+				threadMaster = new Thread(){
+					@Override
+					public void run(){
+						startMaster();
+					}
+				};
+				threadMaster.start();
+				break;
+
+			case CLONE:
+				serverSocket = new ServerSocket(port);
+				threadClone = new Thread(){
+					@Override
+					public void run(){
+						startClone();
+					}
+				};
+				threadClone.start();
+				break;
 		}
 	}
 
@@ -99,42 +104,46 @@ public class Clone_Subject implements Observable {
 
 	/**
 	 * USADA SOMENTE PELO CLONE
-	 * Essa função é responsável por iniciar o cloen 
-	 * Ela cria uma thread para esperar por novas conexões 
+	 * Essa função é responsável por iniciar o cloen
+	 * Ela cria uma thread para esperar por novas conexões
 	 * E outra thread para verificar se o master está ativo
 	 */
 	public static void startClone(){
 		sendMessageToMaster(CloneMessage.REGISTER);
-		
+
 		new Thread(){
 			@Override
 			public void run(){
 				listenFromMaster();
 			}
 		}.start();
-		
+
 		threadToCheckMaster = new Thread(){
 			@Override
 			public void run(){
 				while((System.currentTimeMillis() - timeLastMessageMaster) < 950);
-				System.out.println("Eu sou o master agora!");
+				System.out.println("O master caiu!");
 				try {
-					startNewMaster();
-				} catch (InterruptedException e) {
+					if (InetAddress.getLocalHost().getHostAddress().equals(clones.get(1))) {
+						clones.remove(0);
+						sendMessageToClone(0, clones.get(0));
+						startNewMaster();
+					}
+				} catch (Exception e) {
 					e.printStackTrace();
 				}
 			}
 		};
 	}
-	
+
 	/**
 	 * USADA SOMENTE PELO MASTER
 	 * Essa função é responsável por iniciar o master
-	 * Ela cria uma nova thread para esperar por novas conexões 
+	 * Ela cria uma nova thread para esperar por novas conexões
 	 * E cria uma outra thread para mudar o conjunto de pontos aleatóriamente
 	 */
 	private static void startMaster(){
-		//inicia o servidor para ficar ouvindo os clientes em uma thread 
+		//inicia o servidor para ficar ouvindo os clientes em uma thread
 		new Thread() {
 			@Override
 			public void run() {
@@ -146,7 +155,7 @@ public class Clone_Subject implements Observable {
 				}
 			}
 		}.start();
-		
+
 		//inicia uma nova thread para aleatoriamente adicionar ou remover pontos e enviar os novos pontos para os observers
 		new Thread() {
 			@Override
@@ -159,17 +168,17 @@ public class Clone_Subject implements Observable {
 						sendMessageToClone(CloneMessage.SAVE,null);
 					}
 
-				} catch (InterruptedException e) {					
+				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
 			}
 		}.start();
 
 	}
-	
+
 	/**
 	 * USADA SOMENTE PELO MASTER
-	 * Essa função modifica o conjunto de pontos atuais 
+	 * Essa função modifica o conjunto de pontos atuais
 	 * Ela pode adicionar novos pontos ou remover os já existentes
 	 */
 	protected static void changePoints() {
@@ -177,49 +186,49 @@ public class Clone_Subject implements Observable {
 		newPoints.clear();
 		toRemove.clear();
 		switch (change) {
-		case 0:
-			for (int i = 0; i < getNumPointToChange(); i++) {
-				Point point = new Point();
-				int x = random.nextInt(1000);
-				int y = random.nextInt(1000);
-				int cor = random.nextInt(5);
-				point.setX(x);
-				point.setY(y);
-				point.setCor(cor);
-				newPoints.add(point);
+			case 0:
+				for (int i = 0; i < getNumPointToChange(); i++) {
+					Point point = new Point();
+					int x = random.nextInt(1000);
+					int y = random.nextInt(1000);
+					int cor = random.nextInt(5);
+					point.setX(x);
+					point.setY(y);
+					point.setCor(cor);
+					newPoints.add(point);
 
-			}
-			synchronized (points) {
-				points.addAll(newPoints);
-				numPoints = points.size();
-			}
-			break;
+				}
+				synchronized (points) {
+					points.addAll(newPoints);
+					numPoints = points.size();
+				}
+				break;
 
-		case 1:
-			Point [] currentPoints = (Point[]) points.toArray(new Point[numPoints]);
-			for (int i = 0; i < getNumPointToRemove(); i++) {
-				int aux;
-				aux = random.nextInt(numPoints);
-				newPoints.add(currentPoints[aux]);
-				toRemove.add(aux);
-			}
-			synchronized (points) {
-				for(Point point : newPoints)
-					points.remove(point);
-				numPoints = points.size();
-			}
-			break;
+			case 1:
+				Point [] currentPoints = (Point[]) points.toArray(new Point[numPoints]);
+				for (int i = 0; i < getNumPointToRemove(); i++) {
+					int aux;
+					aux = random.nextInt(numPoints);
+					newPoints.add(currentPoints[aux]);
+					toRemove.add(aux);
+				}
+				synchronized (points) {
+					for(Point point : newPoints)
+						points.remove(point);
+					numPoints = points.size();
+				}
+				break;
 		}
 	}
 
 	/**
 	 * USADA SOMENTE PELO CLONE
-	 * Essa função é executada por uma thread que fica esperando por novas conexões com o clone 
+	 * Essa função é executada por uma thread que fica esperando por novas conexões com o clone
 	 * Essa conexão só pode ser feita pelo master
 	 * @throws IOException
 	 */
 	public static void listenFromMaster(){
-		while(true){ 
+		while(true){
 			try {
 				Socket s = serverSocket.accept();
 				new Thread() {
@@ -228,10 +237,10 @@ public class Clone_Subject implements Observable {
 						try {
 							ObjectInputStream in = new ObjectInputStream(s.getInputStream());
 							Object object = in.readObject();
-							
+
 							getMessageFromMaster(object);
-							
-							s.close();						
+
+							s.close();
 						} catch (IOException e) {
 							e.printStackTrace();
 						} catch (ClassNotFoundException e) {
@@ -244,10 +253,10 @@ public class Clone_Subject implements Observable {
 			}
 		}
 	}
-	
+
 	/**
 	 * USADA SOMENTE PELO MASTER
-	 * Essa função é executada por uma thread que fica esperando por novas conexões com o master 
+	 * Essa função é executada por uma thread que fica esperando por novas conexões com o master
 	 * Essa conexão pode ser feita por um clone ou por um observer
 	 * @throws IOException
 	 */
@@ -260,12 +269,12 @@ public class Clone_Subject implements Observable {
 					try {
 						ObjectInputStream in = new ObjectInputStream(client.getInputStream());
 						Object object = in.readObject();
-												
+
 						if(object instanceof ObserverMessage)
 							getMessageFromObserver(object);
 						else if(object instanceof CloneMessage)
 							getMessageFromClone(object);
-						
+
 					} catch (IOException e) {
 						e.printStackTrace();
 					} catch (ClassNotFoundException e) {
@@ -273,63 +282,69 @@ public class Clone_Subject implements Observable {
 					}
 				}
 			}.start();
-			
+
 		}
 	}
 	@SuppressWarnings("resource")
 	protected static void udpListen() throws IOException{
-			DatagramSocket dsocket = new DatagramSocket(checkMasterPort);
-			new Thread(){
-				@SuppressWarnings("unused")
-				public void run(){
-					while (true){
-						try
-						{
-							byte[] recvBuf = new byte[5000];
-							DatagramPacket receivepacket = new DatagramPacket(recvBuf,
-						                                                 recvBuf.length);
-							dsocket.receive(receivepacket);
-							int byteCount = receivepacket.getLength();
-							ByteArrayInputStream receivebyteStream = new ByteArrayInputStream(recvBuf);
-						      ObjectInputStream is = new
-						           ObjectInputStream(new BufferedInputStream(receivebyteStream));
-						      CheckMasterMessage o = (CheckMasterMessage) is.readObject();
-						      is.close();
-						      if (o.getType() == CheckMasterMessage.CHECK){
-						    	  Socket s = new Socket(o.getIP(), checkMasterPort);
-									
-									CheckMasterMessage message = new CheckMasterMessage();
-									message.setIP(InetAddress.getLocalHost().getHostAddress());
-									message.setType(CheckMasterMessage.SUBJECT);
-									
-									ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
-									out.writeObject(message);
-									out.flush();
-									out.close();
-									
-									s.close();
-						      }
-						      
-						    }
-						    catch (IOException e)
-						    {
-						      System.err.println("Exception:  " + e);
-						      e.printStackTrace();
-						    }
-							catch (ClassNotFoundException e){
-								System.err.println("Exception:  " + e);
-								e.printStackTrace();
-							}
+
+		System.out.println("udpListen");
+
+		DatagramSocket dsocket = new DatagramSocket(checkMasterPort);
+
+		new Thread(){
+			@SuppressWarnings("unused")
+			public void run(){
+				while (true){
+					try
+					{
+						byte[] recvBuf = new byte[5000];
+						DatagramPacket receivepacket = new DatagramPacket(recvBuf,
+								recvBuf.length);
+						dsocket.receive(receivepacket);
+						int byteCount = receivepacket.getLength();
+						ByteArrayInputStream receivebyteStream = new ByteArrayInputStream(recvBuf);
+						ObjectInputStream is = new
+								ObjectInputStream(new BufferedInputStream(receivebyteStream));
+						CheckMasterMessage o = (CheckMasterMessage) is.readObject();
+						is.close();
+
+						if (o.getType() == CheckMasterMessage.CHECK){
+							Socket s = new Socket(o.getIP(), checkMasterPort);
+
+							CheckMasterMessage message = new CheckMasterMessage();
+							message.setIP(InetAddress.getLocalHost().getHostAddress());
+							message.setType(CheckMasterMessage.SUBJECT);
+
+							ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
+							out.writeObject(message);
+							out.flush();
+							out.close();
+
+							s.close();
+						}
+
+					}
+					catch (IOException e)
+					{
+						System.err.println("Exception:  " + e);
+						e.printStackTrace();
+
+					}
+					catch (ClassNotFoundException e){
+						System.err.println("Exception:  " + e);
+						e.printStackTrace();
+
 					}
 				}
-			}.start();
-			//dsocket.close();
+			}
+		}.start();
 	}
-	
+
 	/**
 	 * Essa função é chamada quando o master é desligado
 	 * O clone agora assumirá o controle
-	 * @throws InterruptedException 
+	 * @throws InterruptedException
 	 */
 	private static void startNewMaster() throws InterruptedException{
 
@@ -345,7 +360,7 @@ public class Clone_Subject implements Observable {
 		};
 		threadMaster.start();
 	}
-	
+
 	/**
 	 * USADA SOMENTE PELO CLONE
 	 * Essa função recebe uma mensagem do master
@@ -357,38 +372,43 @@ public class Clone_Subject implements Observable {
 	 */
 	private static void getMessageFromMaster(Object object) throws UnknownHostException, IOException{
 
-		System.out.println("get message from Master");
 
 		CloneMessage message = (CloneMessage) object;
-		
+
 		timeLastMessageMaster = System.currentTimeMillis();
-		
-		switch(message.getType()){	
-			case CloneMessage.NEW:		
+
+		switch(message.getType()){
+			case CloneMessage.NEW:
 				synchronized (points) {
 					points.addAll(message.getPoints());
 				}
-				
-										synchronized (observers) {
-											observers.addAll(message.getObservers() ) ;
-										}
-										threadToCheckMaster.start();
-										break;
-										
-			case CloneMessage.ADD: 		
-										synchronized (observers) {
-											observers.add(message.getObserver());
-										}
-										break;
-										
-			case CloneMessage.SAVE:		
-										points.clear();
-										points.addAll(message.getPoints());
-										sendMessageToMaster(CloneMessage.SAVED);
-										break;
+
+				synchronized (observers) {
+					observers.addAll(message.getObservers() ) ;
+				}
+				synchronized (clones) {
+					clones = message.getClones();
+				}
+				threadToCheckMaster.start();
+				break;
+
+			case CloneMessage.ADD:
+				synchronized (observers) {
+					observers.add(message.getObserver());
+				}
+				break;
+
+			case CloneMessage.SAVE:
+				points.clear();
+				points.addAll(message.getPoints());
+				sendMessageToMaster(CloneMessage.SAVED);
+				break;
+			case CloneMessage.UNREGISTER:
+				clones = message.getClones();
+				break;
 		}
 	}
-	
+
 	/**
 	 * USADA SOMENTE PELO MASTER
 	 * Essa função recebe uma mensagem de um observer
@@ -400,163 +420,173 @@ public class Clone_Subject implements Observable {
 	 */
 	private static void getMessageFromObserver(Object object) throws UnknownHostException, IOException{
 
-		System.out.println("get message from Observer");
 
 		ObserverMessage message = (ObserverMessage) object;
 		switch (message.getType()) {
 			case 0:	myInstance.registerObserver(message.getIp());
-					break;
+				break;
 			case 1:	myInstance.unregisterObserver(message.getIp());
-					break;
-		}		
+				break;
+		}
 	}
-	
+
 	/**
 	 * USADA SOMENTE PELO MASTER
-	 * Essa função recebe uma mensagem do clone 
+	 * Essa função recebe uma mensagem do clone
 	 * Essa mensagem é a confirmação que os dados foram salvos com sucesso
 	 * Após a confirmação, o master notifica todos os observers com os novos pontos
 	 * @param object é a mensagem que foi recebida
 	 */
 	private static void getMessageFromClone(Object object){
 
-		System.out.println("get message from Clone");
 
 
 		CloneMessage message = (CloneMessage) object;
-				
+
 		switch(message.getType()){
-			case CloneMessage.REGISTER: if(cloneIp == null){
-											cloneIp = message.getCloneIp();
-											System.out.println(cloneIp + " é o clone agora!");
-											sendMessageToClone(CloneMessage.NEW,cloneIp);
-										}
-										break;
-										
-			case CloneMessage.SAVED: 	if(observers.size() != 0)
-											myInstance.notifyObservers(UPDATE);
-									 	break;
+			case CloneMessage.REGISTER:
+				//cloneIp = message.getCloneIp();
+//				System.out.println(cloneIp + " é o clone agora!");
+				clones.add(message.getCloneIp());
+				sendMessageToClone(CloneMessage.NEW,clones.get(0));
+
+				break;
+
+			case CloneMessage.SAVED:
+				if(observers.size() != 0)
+					myInstance.notifyObservers(UPDATE);
+				break;
 		}
 	}
-	
+
 	/**
 	 * USADA SOMENTE PELO CLONE
 	 * Essa função envia uma mensagem para o clone com uma cópia do conjunto de pontos
-	 * Após ser enviado o master aguarda uma confirmação do clone para então enviar 
+	 * Após ser enviado o master aguarda uma confirmação do clone para então enviar
 	 * os pontos para todos os observers
 	 */
 	private static void sendMessageToMaster(int type) {
 
-		System.out.println("Send message to Master");
-
 		Socket s;
+
 		try {
 			s = new Socket(masterIp, port);
 			CloneMessage message = new CloneMessage();
-			
+
 			switch(type){
-				case CloneMessage.REGISTER: message.setType(CloneMessage.REGISTER);
-											message.setPoints(points);
-											message.setObservers(observers);
-											message.setCloneIp(s.getLocalAddress().getHostAddress());
-											break;
-										
-				case CloneMessage.SAVED:	message.setType(CloneMessage.SAVED);
-											break;
+				case CloneMessage.REGISTER:
+					message.setType(CloneMessage.REGISTER);
+					message.setPoints(points);
+					message.setObservers(observers);
+					message.setCloneIp(s.getLocalAddress().getHostAddress());
+					break;
+
+				case CloneMessage.SAVED:
+					message.setType(CloneMessage.SAVED);
+					break;
 			}
-			
+
 			ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
 			out.writeObject(message);
 			out.flush();
 			out.close();
-			
-			s.close();	
+
+			s.close();
 		} catch (UnknownHostException e) {
-			
+
 		} catch (IOException e) {
-			
+
 		}
 	}
 
 	/**
 	 * USADA SOMENTE PELO MASTER
 	 * Essa função envia uma mensagem para o clone com uma cópia do conjunto de pontos
-	 * Após ser enviado o master aguarda uma confirmação do clone para então enviar 
+	 * Após ser enviado o master aguarda uma confirmação do clone para então enviar
 	 * os pontos para todos os observers
 	 */
 	private static void sendMessageToClone(int type, String ip){
 
-		System.out.println("Send message to Clone");
 
 		Socket s;
 		try {
-			if (cloneIp == null)
+//			if (cloneIp == null)
+			if (clones.isEmpty())
 				throw new IOException();
-			s = new Socket(cloneIp, port);
-			
-			CloneMessage message = new CloneMessage();
+			for (String cloneIp : clones) {
+				s = new Socket(cloneIp, port);
+				CloneMessage message = new CloneMessage();
 
-			switch(type){	
-				case CloneMessage.NEW: 		message.setType(CloneMessage.NEW);
-											message.setPoints(points);
-											message.setObservers(observers);
-											break;
-				
-				case CloneMessage.ADD: 		message.setType(CloneMessage.ADD);
-											message.setObserver(ip);
-											break;
-											
-				case CloneMessage.SAVE: 	message.setType(CloneMessage.SAVE);
-											message.setPoints(points);
-											break;
+				switch(type){
+					case CloneMessage.NEW:
+						message.setType(CloneMessage.NEW);
+						message.setPoints(points);
+						message.setObservers(observers);
+						message.setClones(clones);
+						break;
+
+					case CloneMessage.ADD:
+						message.setType(CloneMessage.ADD);
+						message.setObserver(ip);
+						break;
+
+					case CloneMessage.SAVE:
+						message.setType(CloneMessage.SAVE);
+						message.setPoints(points);
+						break;
+					case CloneMessage.UNREGISTER:
+						message.setType(CloneMessage.UNREGISTER);
+						message.setClones(clones);
+						break;
+
+				}
+
+				ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
+				out.writeObject(message);
+				out.flush();
+				out.close();
+
+				s.close();
 			}
-			
-			ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
-			out.writeObject(message);
-			out.flush();
-			out.close();
-			
-			s.close();	
+
 		} catch (IOException e) {
 			System.out.println("Sem conexão com o clone!");
 			if(observers.size() != 0)
 				myInstance.notifyObservers(UPDATE);
 		}
 	}
-	
+
 	@SuppressWarnings("unused")
 	private static void checkExistingMasters(){
 		Socket s;
 
 		try {
 
-			DatagramSocket dSock = new DatagramSocket();
+			DatagramSocket dSock = new DatagramSocket ();
 			dSock.setBroadcast(true);
-			
+
 			CheckMasterMessage message = new CheckMasterMessage();
 			message.setIP(InetAddress.getLocalHost().getHostAddress());
 			message.setType(CheckMasterMessage.CHECK);
-			
+
 			InetAddress group = InetAddress.getByName("200.239.139.255");
-			
+
 			ByteArrayOutputStream byteStream = new ByteArrayOutputStream(5000);
 			ObjectOutputStream os = new ObjectOutputStream(new BufferedOutputStream(byteStream));
 			os.flush();
 			os.writeObject(message);
+			os.flush();
 
 			byte[] sendBuffer = byteStream.toByteArray();
-			
-			DatagramPacket packet = new DatagramPacket(sendBuffer,
-					sendBuffer.length,
-					group,
-					checkMasterPort);
-			
- 			dSock.send(packet);
-		    os.close();
 
-		    try{
+			DatagramPacket packet = new DatagramPacket(sendBuffer, sendBuffer.length,group,checkMasterPort);
 
-		    	s = checkMasterSocket.accept();
+			dSock.send(packet);
+			os.close();
+
+			try{
+
+				s = checkMasterSocket.accept();
 				System.out.println("Try accept");
 				ObjectInputStream in = new ObjectInputStream(s.getInputStream());
 				CheckMasterMessage response = (CheckMasterMessage) in.readObject();
@@ -571,14 +601,13 @@ public class Clone_Subject implements Observable {
 			} catch (Exception e){
 				e.printStackTrace();
 			}
-		    dSock.close();
-		    
+
 		} catch (IOException e) {
 			System.out.println("Erro ao enviar pacote");
 			e.printStackTrace();
 		}
 	}
-	
+
 	/**
 	 * USADA SOMENTE PELO MASTER
 	 * Essa função insere um novo observer na lista 
@@ -609,7 +638,38 @@ public class Clone_Subject implements Observable {
 			observers.remove(index);
 		}
 	}
-	
+
+	/**
+	 * USADA SOMENTE PELO MASTER
+	 * Essa função insere um novo observer na lista
+	 * @param ip do observer que deseja ser inserido
+	 * @throws UnknownHostException
+	 * @throws IOException
+	 */
+	@Override
+	public void registerClone(String ip) throws UnknownHostException, IOException {
+		synchronized (clones) {
+			clones.add(ip);
+			System.out.println("Adicionado o observer: " + ip);
+		}
+		notifyObserverJustRegistered(ip);
+		sendMessageToClone(CloneMessage.ADD,ip);
+	}
+
+	/**
+	 * USADA SOMENTE PELO MASTER
+	 * Essa função remove um observer da lista
+	 * @param ip do observer que deseja ser removido
+	 */
+	@Override
+	public void unregisterClone(String ip) {
+		int index = clones.indexOf(ip);
+		synchronized (clones) {
+			System.out.println("Removido o observer: " + ip);
+			clones.remove(index);
+		}
+	}
+
 	/**
 	 * USADA SOMENTE PELO MASTER
 	 * Essa função envia uma mensagem com o conjunto de pontos que acabou de ser atualizado 
@@ -624,26 +684,26 @@ public class Clone_Subject implements Observable {
 				try {
 					Socket s = new Socket(ip, port);
 					ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
-					
+
 					SubjectMessage message = new SubjectMessage();
-					
+
 					switch(type){
 						case UPDATE:	message.setPoints(newPoints);
-										message.setType(change);
-										if (change == 1){
-											message.setRemoveList(toRemove);
-										}
-										break;
+							message.setType(change);
+							if (change == 1){
+								message.setRemoveList(toRemove);
+							}
+							break;
 						case NEWMASTER: message.setIp(serverSocket.getInetAddress().getHostAddress());
-										message.setType(NEWMASTER);
-										break;
+							message.setType(NEWMASTER);
+							break;
 					}
-					
+
 					out.writeObject(message);
 					out.flush();
 					out.close();
 					s.close();
-					
+
 				} catch (Exception e) {
 					ipsToRemove.add(ip);
 					System.out.println("Conexão perdida com observer: " + ip);
@@ -653,8 +713,8 @@ public class Clone_Subject implements Observable {
 		}
 		newPoints.clear();
 	}
-	
-	
+
+
 	/**
 	 * USADA SOMENTE PELO MASTER
 	 * Essa função envia o conjunto de pontos atuais para o Observer que acabou de se registrar
@@ -664,19 +724,19 @@ public class Clone_Subject implements Observable {
 	 */
 	private void notifyObserverJustRegistered(String ip) throws UnknownHostException, IOException{
 		Socket s = new Socket(ip,port);
-		
+
 		ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
 		SubjectMessage message = new SubjectMessage();
 		message.setType(0);
 		message.setPoints(points);
-		
+
 		out.writeObject(message);
 		out.flush();
 		out.close();
 		s.close();
 	}
 
-	
+
 	/**
 	 * USADA SOMENTE PELO MASTER
 	 * Essa função sorteia aleatóriamente um número de pontos a serem inseridos no cojunto de pontos já existente
@@ -689,7 +749,7 @@ public class Clone_Subject implements Observable {
 		return Math.abs(randomNum);
 	}
 
-	
+
 	/**
 	 * USADA SOMENTE PELO MASTER
 	 * Essa função sorteia aleatóriamente um número de pontos para serem removidos do conjunto já existente
@@ -698,5 +758,5 @@ public class Clone_Subject implements Observable {
 	public static int getNumPointToRemove() {
 		return (int) Math.abs(numPoints * 0.15);
 	}
-	
+
 }

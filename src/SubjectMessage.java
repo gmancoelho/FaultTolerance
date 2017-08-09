@@ -5,6 +5,7 @@ public class SubjectMessage implements Serializable{
 	private static final long serialVersionUID = 1L;
 	private List<Point> points;
 	private List<Integer> toRemove;
+	private List<String> clones;
 	private int 		type;
 	private String 		ip;
 
@@ -30,6 +31,14 @@ public class SubjectMessage implements Serializable{
 
 	public List<Point> getPoints() {
 		return points;
+	}
+
+	public List<String> getClones() {
+		return clones;
+	}
+
+	public void setClones(List<String> clones) {
+		this.clones = clones;
 	}
 
 	public List<Integer> getRemoveList() {

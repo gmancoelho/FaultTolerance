@@ -47,7 +47,7 @@ public class Clone implements Observable {
 		
 		checkExistingMasters();
 
-		whoAmI = SUBJECT;
+		//whoAmI = SUBJECT;
 
 		switch(whoAmI){
 			case SUBJECT: 	serverSocket = new ServerSocket(port);
