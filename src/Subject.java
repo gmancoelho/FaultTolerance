@@ -1,6 +1,7 @@
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
@@ -47,7 +48,8 @@ public class Subject implements Observable {
 		cloneIp				= null;
 
 		switch(whoAmI){
-			case SUBJECT: 	serverSocket = new ServerSocket(port);
+			case SUBJECT:
+			    serverSocket = new ServerSocket(port);
 				for (int i = 0; i < numPoints; i++) {
 					Point point = new Point();
 					int x = random.nextInt(1000);
@@ -67,7 +69,8 @@ public class Subject implements Observable {
 				threadMaster.start();
 				break;
 
-			case CLONE: 	serverSocket = new ServerSocket(port);
+			case CLONE:
+			    serverSocket = new ServerSocket(port);
 				threadClone = new Thread(){
 					@Override
 					public void run(){
@@ -187,7 +190,11 @@ public class Subject implements Observable {
 					aux = random.nextInt(numPoints);
 					newPoints.add(currentPoints[aux]);
 				}
-				points.removeAll(newPoints);
+				try{
+					points.removeAll(newPoints);
+				}catch (Exception e){
+					System.out.println("Erro ao deletar pontos");
+				}
 				numPoints = points.size();
 				break;
 		}
@@ -527,17 +534,15 @@ public class Subject implements Observable {
 				ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
 
 				SubjectMessage message = new SubjectMessage();
-
 				switch(type){
 					case UPDATE:
 					    message.setPoints(newPoints);
 						message.setType(change);
 						break;
 					case NEWMASTER:
-                        System.out.println("new master: " + serverSocket.getInetAddress().getHostAddress());
-
-                        message.setIp(serverSocket.getInetAddress().getHostAddress());
+                        message.setIp(InetAddress.getLocalHost().getHostAddress());
 						message.setType(NEWMASTER);
+						whoAmI = SUBJECT;
 						break;
 				}
 

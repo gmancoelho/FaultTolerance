@@ -54,8 +54,9 @@ public class Clone_Subject implements Observable {
 		random 				= new Random();
 		masterIp			= null;
 		cloneIp				= null;
+
 		checkMasterSocket 	= new ServerSocket(checkMasterPort);
-		whoAmI  			= CLONE;
+
 		checkMasterSocket.setSoTimeout(3000);
 		
 		checkExistingMasters();
@@ -284,6 +285,7 @@ public class Clone_Subject implements Observable {
         System.out.println("udpListen");
 
         DatagramSocket dsocket = new DatagramSocket(checkMasterPort);
+
 			new Thread(){
 				@SuppressWarnings("unused")
 				public void run(){
@@ -300,6 +302,7 @@ public class Clone_Subject implements Observable {
 						           ObjectInputStream(new BufferedInputStream(receivebyteStream));
 						      CheckMasterMessage o = (CheckMasterMessage) is.readObject();
 						      is.close();
+
 						      if (o.getType() == CheckMasterMessage.CHECK){
 						    	  Socket s = new Socket(o.getIP(), checkMasterPort);
 									
