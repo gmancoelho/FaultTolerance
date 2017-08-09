@@ -23,15 +23,15 @@ public class ConcretObserver {
 	private static final int 			checkMasterPort = 6970;
 	private static String 				masterIp;
 	private static Frame 				frame;
-	
+
 	public ConcretObserver() throws IOException{
 		serverSocket 		= new ServerSocket(port);
 		points 				= Collections.synchronizedList(new ArrayList<Point>());
 		masterIp			= null;
 		checkMasterSocket 	= new ServerSocket(checkMasterPort);
-		
+
 		checkMasterSocket.setSoTimeout(3000);
-		
+
 		checkExistingMasters();
 	}
 
@@ -41,7 +41,7 @@ public class ConcretObserver {
 
 	private static void startObserver() throws UnknownHostException, IOException{
 		frame = new Frame();
-		
+
 		new Thread() {
 			@Override
 			public void run() {
@@ -53,35 +53,35 @@ public class ConcretObserver {
 			}
 		}.start();
 	}
-	
+
 	@SuppressWarnings("unused")
 	private static void checkExistingMasters(){
 		Socket s;
 		try {
 			DatagramSocket dSock = new DatagramSocket();
 			dSock.setBroadcast(true);
-			
+
 			CheckMasterMessage message = new CheckMasterMessage();
 			message.setIP(InetAddress.getLocalHost().getHostAddress());
 			message.setType(CheckMasterMessage.CHECK);
-			
+
 			InetAddress group = InetAddress.getByName("200.239.139.255");
-			
+
 			ByteArrayOutputStream byteStream = new ByteArrayOutputStream(5000);
 			ObjectOutputStream os = new ObjectOutputStream(new BufferedOutputStream(byteStream));
 			os.flush();
 			os.writeObject(message);
 			os.flush();
 			byte[] sendBuffer = byteStream.toByteArray();
-			
+
 			DatagramPacket packet = new DatagramPacket(sendBuffer,
 					sendBuffer.length,
 					group,
 					checkMasterPort);
-			
+
 			dSock.send(packet);
-		    os.close();
-		    try{
+			os.close();
+			try{
 				System.out.println("BEFORE ACCEPT");
 				s = checkMasterSocket.accept();
 				System.out.println("AFTER ACCEPT");
@@ -90,18 +90,18 @@ public class ConcretObserver {
 				masterIp = response.getIP();
 				startObserver();
 				register();
-		    	
-		    }  catch (SocketTimeoutException e){
+
+			}  catch (SocketTimeoutException e){
 			} catch (Exception e){
 				e.printStackTrace();
 			}
-		    dSock.close();
-		    
+			dSock.close();
+
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
-	
+
 	/**
 	 * USADA SOMENTE PELO MASTER
 	 * Essa função é executada por uma thread que fica esperando por novas conexões com o master 
@@ -115,42 +115,42 @@ public class ConcretObserver {
 				@Override
 				public void run() {
 					try {
-							ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
-							SubjectMessage message = (SubjectMessage) in.readObject();
-							
-							int type = message.getType();
-							
-							List<Point> newPoints = message.getPoints();
-							update(type,newPoints);
-							
-							socket.close();
-						} catch (IOException | ClassNotFoundException e) {
-							e.printStackTrace();
-						}	
+						ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
+						SubjectMessage message = (SubjectMessage) in.readObject();
+
+						int type = message.getType();
+
+						List<Point> newPoints = message.getPoints();
+						update(type,newPoints);
+
+						socket.close();
+					} catch (IOException | ClassNotFoundException e) {
+						e.printStackTrace();
 					}
+				}
 			}.start();
 		}
 	}
-	
+
 	/**
 	 * USADA SOMENTE PELO OBSERVER
 	 * Essa função atualiza o frame com o novo conjunto de pontos
 	 */
 	public static void update(int type,List<Point> newPoints) {
-		
+
 		switch(type){
-			case 0: 
+			case 0:
 				synchronized (points) {
 					points.addAll(newPoints);
 				}
-				
-					break;
+
+				break;
 			case 1: for(Point point : newPoints)
 				synchronized (point) {
 					points.remove(point);
 				}break;
 		}
-		
+
 		frame.setPoints(points);
 		frame.revalidate();
 		frame.repaint();
@@ -162,16 +162,16 @@ public class ConcretObserver {
 	 */
 	public static void register() throws UnknownHostException, IOException {
 		Socket s = new Socket(masterIp, port);
-		
+
 		ObserverMessage message = new ObserverMessage();
 		message.setIp(s.getLocalAddress().getHostAddress());
 		message.setType(0);
-		
+
 		ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
 		out.writeObject(message);
 		out.flush();
 		out.close();
-		
+
 		s.close();
 	}
 
@@ -186,7 +186,7 @@ public class ConcretObserver {
 		ObserverMessage message = new ObserverMessage();
 		message.setIp(s.getLocalAddress().getHostAddress());
 		message.setType(1);
-		
+
 		ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
 		out.writeObject(message);
 		out.flush();
