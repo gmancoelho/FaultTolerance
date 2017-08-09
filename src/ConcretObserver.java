@@ -58,7 +58,7 @@ public class ConcretObserver {
 	private static void checkExistingMasters(){
 		Socket s;
 		try {
-			DatagramSocket dSock = new DatagramSocket(checkMasterPort,InetAddress.getByName("200.239.139.255") );
+			DatagramSocket dSock = new DatagramSocket();
 			dSock.setBroadcast(true);
 			
 			CheckMasterMessage message = new CheckMasterMessage();
@@ -74,13 +74,18 @@ public class ConcretObserver {
 			os.flush();
 			byte[] sendBuffer = byteStream.toByteArray();
 			
-			DatagramPacket packet = new DatagramPacket(sendBuffer, sendBuffer.length,dSock.getLocalAddress(),checkMasterPort);
+			DatagramPacket packet = new DatagramPacket(sendBuffer,
+					sendBuffer.length,
+					group,
+					checkMasterPort);
 			
 			dSock.send(packet);
 		    os.close();
 		    try{
-		    	s = checkMasterSocket.accept();
-		    	ObjectInputStream in = new ObjectInputStream(s.getInputStream());
+				System.out.println("BEFORE ACCEPT");
+				s = checkMasterSocket.accept();
+				System.out.println("AFTER ACCEPT");
+				ObjectInputStream in = new ObjectInputStream(s.getInputStream());
 				CheckMasterMessage response = (CheckMasterMessage) in.readObject();
 				masterIp = response.getIP();
 				startObserver();
