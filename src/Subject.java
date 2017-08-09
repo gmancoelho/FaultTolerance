@@ -106,7 +106,7 @@ public class Subject implements Observable {
 			@Override
 			public void run(){
 				while((System.currentTimeMillis() - timeLastMessage) < 950);
-				System.out.println("I am the clone now");
+				System.out.println("I am the master now");
 				try {
 					startNewMaster();
 				} catch (InterruptedException e) {
@@ -274,7 +274,9 @@ public class Subject implements Observable {
 		threadClone.interrupt();
 		cloneIp = observers.get(0);
 		clones.addElement(cloneIp);
-		sendMessageToClone(CloneMessage.NEW,null);
+        System.out.println("Clone IP : " + cloneIp);
+
+        sendMessageToClone(CloneMessage.NEW,null);
 		threadMaster = new Thread(){
 			@Override
 			public void run(){
@@ -527,10 +529,14 @@ public class Subject implements Observable {
 				SubjectMessage message = new SubjectMessage();
 
 				switch(type){
-					case UPDATE:	message.setPoints(newPoints);
+					case UPDATE:
+					    message.setPoints(newPoints);
 						message.setType(change);
 						break;
-					case NEWMASTER: message.setIp(serverSocket.getInetAddress().getHostAddress());
+					case NEWMASTER:
+                        System.out.println("new master: " + serverSocket.getInetAddress().getHostAddress());
+
+                        message.setIp(serverSocket.getInetAddress().getHostAddress());
 						message.setType(NEWMASTER);
 						break;
 				}
