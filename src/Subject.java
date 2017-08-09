@@ -42,8 +42,8 @@ public class Subject implements Observable {
 		newPoints 			= new ArrayList<Point>();
 		clones				= new Stack<String>();
 		random 				= new Random();
-		masterIp			= "200.239.139.255";
-		whoAmI				= SUBJECT;
+		masterIp			= "200.239.138.242";
+		whoAmI				= CLONE;
 		cloneIp				= null;
 
 		switch(whoAmI){
@@ -106,7 +106,7 @@ public class Subject implements Observable {
 			@Override
 			public void run(){
 				while((System.currentTimeMillis() - timeLastMessage) < 950);
-				System.out.println("I am the master now");
+				System.out.println("I am the clone now");
 				try {
 					startNewMaster();
 				} catch (InterruptedException e) {
@@ -205,7 +205,7 @@ public class Subject implements Observable {
 			System.out.print(".");
 			try {
 				Socket s = serverSocket.accept();
-				//System.out.println("ListenFromMaster - ServerScoket accepted");
+//				System.out.println("ListenFromMaster - ServerScoket accepted");
 				new Thread() {
 					@Override
 					public void run() {
@@ -239,7 +239,7 @@ public class Subject implements Observable {
 		System.out.println("Server Ready");
 		while(true){
 			Socket client = serverSocket.accept();
-			//System.out.println("Listen - ServerScoket accepted");
+//			System.out.println("Listen - ServerScoket accepted");
 			new Thread() {
 				@Override
 				public void run() {
@@ -410,8 +410,9 @@ public class Subject implements Observable {
 
 			s.close();
 		} catch (UnknownHostException e) {
-
+			System.out.println("SERVER DOWN");
 		} catch (IOException e) {
+			System.out.println("SERVER DOWN");
 
 		}
 	}

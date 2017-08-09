@@ -61,7 +61,8 @@ public class Clone_Subject implements Observable {
 		checkExistingMasters();
 				
 		switch(whoAmI){
-			case SUBJECT: 	serverSocket = new ServerSocket(port);
+			case SUBJECT:
+				serverSocket = new ServerSocket(port);
 							for (int i = 0; i < numPoints; i++) {
 								Point point = new Point();
 								int x = random.nextInt(1000);
@@ -81,7 +82,8 @@ public class Clone_Subject implements Observable {
 							threadMaster.start();
 							break;
 							
-			case CLONE: 	serverSocket = new ServerSocket(port);
+			case CLONE:
+				serverSocket = new ServerSocket(port);
 							threadClone = new Thread(){
 								@Override
 								public void run(){
@@ -278,7 +280,10 @@ public class Clone_Subject implements Observable {
 	}
 	@SuppressWarnings("resource")
 	protected static void udpListen() throws IOException{
-			DatagramSocket dsocket = new DatagramSocket(checkMasterPort);
+
+        System.out.println("udpListen");
+
+        DatagramSocket dsocket = new DatagramSocket(checkMasterPort);
 			new Thread(){
 				@SuppressWarnings("unused")
 				public void run(){
