@@ -1,3 +1,4 @@
+/*
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -81,12 +82,14 @@ public class Subject implements Observable {
 		myInstance = new Subject();
 	}
 
-	/**
+	*/
+/**
 	 * USADA SOMENTE PELO CLONE
 	 * Essa função é responsável por iniciar o cloen 
 	 * Ela cria uma thread para esperar por novas conexões 
 	 * E outra thread para verificar se o master está ativo
-	 */
+	 *//*
+
 	public static void startClone(){
 
 		System.out.println("startClone");
@@ -114,12 +117,14 @@ public class Subject implements Observable {
 		};
 	}
 	
-	/**
+	*/
+/**
 	 * USADA SOMENTE PELO MASTER
 	 * Essa função é responsável por iniciar o master
 	 * Ela cria uma nova thread para esperar por novas conexões 
 	 * E cria uma outra thread para mudar o conjunto de pontos aleatóriamente
-	 */
+	 *//*
+
 	private static void startMaster(){
 		System.out.println("Init master");
 
@@ -154,11 +159,13 @@ public class Subject implements Observable {
 		}.start();
 	}
 	
-	/**
+	*/
+/**
 	 * USADA SOMENTE PELO MASTER
 	 * Essa função modifica o conjunto de pontos atuais 
 	 * Ela pode adicionar novos pontos ou remover os já existentes
-	 */
+	 *//*
+
 	protected static void changePoints() {
 		change = random.nextInt(2);
 		switch (change) {
@@ -191,12 +198,14 @@ public class Subject implements Observable {
 		}
 	}
 
-	/**
+	*/
+/**
 	 * USADA SOMENTE PELO CLONE
 	 * Essa função é executada por uma thread que fica esperando por novas conexões com o clone 
 	 * Essa conexão só pode ser feita pelo master
 	 * @throws IOException
-	 */
+	 *//*
+
 	public static void listenFromMaster(){
 		System.out.println("Listening to Master");
 		while(true){
@@ -226,12 +235,14 @@ public class Subject implements Observable {
 		}
 	}
 	
-	/**
+	*/
+/**
 	 * USADA SOMENTE PELO MASTER
 	 * Essa função é executada por uma thread que fica esperando por novas conexões com o master 
 	 * Essa conexão pode ser feita por um clone ou por um observer
 	 * @throws IOException
-	 */
+	 *//*
+
 	protected static void listen() throws IOException {
 		System.out.println("Server Ready");
 		while(true){
@@ -258,11 +269,13 @@ public class Subject implements Observable {
 		}
 	}
 	
-	/**
+	*/
+/**
 	 * Essa função é chamada quando o master é desligado
 	 * O clone agora assumirá o controle
 	 * @throws InterruptedException 
-	 */
+	 *//*
+
 	private static void startNewMaster() throws InterruptedException{
 
 		System.out.println("Start Master");
@@ -283,7 +296,8 @@ public class Subject implements Observable {
 		
 	}
 	
-	/**
+	*/
+/**
 	 * USADA SOMENTE PELO CLONE
 	 * Essa função recebe uma mensagem do master
 	 * Essa mensagem pode ser para adicionar um novo observer
@@ -291,7 +305,8 @@ public class Subject implements Observable {
 	 * @param object é a mensagem que foi recebida
 	 * @throws UnknownHostException
 	 * @throws IOException
-	 */
+	 *//*
+
 	private static void getMessageFromMaster(Object object) throws UnknownHostException, IOException{
 
 		System.out.println("getMessageFromMaster");
@@ -315,7 +330,8 @@ public class Subject implements Observable {
 		}
 	}
 	
-	/**
+	*/
+/**
 	 * USADA SOMENTE PELO MASTER
 	 * Essa função recebe uma mensagem de um observer
 	 * Essa mensagem pode ser para registrar um novo observer
@@ -323,7 +339,8 @@ public class Subject implements Observable {
 	 * @param object é a mensagem que foi recebida
 	 * @throws UnknownHostException
 	 * @throws IOException
-	 */
+	 *//*
+
 	private static void getMessageFromObserver(Object object) throws UnknownHostException, IOException{
 
 		System.out.println("getMessageFromObserver");
@@ -338,13 +355,15 @@ public class Subject implements Observable {
 		}		
 	}
 	
-	/**
+	*/
+/**
 	 * USADA SOMENTE PELO MASTER
 	 * Essa função recebe uma mensagem do clone 
 	 * Essa mensagem é a confirmação que os dados foram salvos com sucesso
 	 * Após a confirmação, o master notifica todos os observers com os novos pontos
 	 * @param object é a mensagem que foi recebida
-	 */
+	 *//*
+
 	private static void getMessageFromClone(Object object){
 
 		System.out.println("getMessageFromClone");
@@ -364,12 +383,14 @@ public class Subject implements Observable {
 		}
 	}
 	
-	/**
+	*/
+/**
 	 * USADA SOMENTE PELO CLONE
 	 * Essa função envia uma mensagem para o clone com uma cópia do conjunto de pontos
 	 * Após ser enviado o master aguarda uma confirmação do clone para então enviar 
 	 * os pontos para todos os observers
-	 */
+	 *//*
+
 	private static void sendMessageToMaster(int type) {
 
 		System.out.println("sendMessageToMaster");
@@ -403,12 +424,14 @@ public class Subject implements Observable {
 		}
 	}
 
-	/**
+	*/
+/**
 	 * USADA SOMENTE PELO MASTER
 	 * Essa função envia uma mensagem para o clone com uma cópia do conjunto de pontos
 	 * Após ser enviado o master aguarda uma confirmação do clone para então enviar 
 	 * os pontos para todos os observers
-	 */
+	 *//*
+
 	private static void sendMessageToClone(int type, String ip){
 
 		System.out.println("sendMessageToClone");
@@ -419,7 +442,7 @@ public class Subject implements Observable {
 			
 			CloneMessage message = new CloneMessage();
 
-			switch(type){	
+			switch(type){
 				case CloneMessage.NEW: 		message.setType(CloneMessage.NEW);
 											message.setPoints(points);
 											message.setObservers(observers);
@@ -465,13 +488,15 @@ public class Subject implements Observable {
 		}
 	}
 	
-	/**
+	*/
+/**
 	 * USADA SOMENTE PELO MASTER
 	 * Essa função insere um novo observer na lista 
 	 * @param ip do observer que deseja ser inserido 
 	 * @throws UnknownHostException
 	 * @throws IOException
-	 */
+	 *//*
+
 	@Override
 	public void registerObserver(String ip) throws UnknownHostException, IOException {
 		observers.add(ip);
@@ -479,22 +504,26 @@ public class Subject implements Observable {
 		sendMessageToClone(CloneMessage.ADD,ip);
 	}
 
-	/**
+	*/
+/**
 	 * USADA SOMENTE PELO MASTER
 	 * Essa função remove um observer da lista 
 	 * @param ip do observer que deseja ser removido
-	 */
+	 *//*
+
 	@Override
 	public void unregisterObserver(String ip) {
 		int index = observers.indexOf(ip);
 		observers.remove(index);
 	}
 	
-	/**
+	*/
+/**
 	 * USADA SOMENTE PELO MASTER
 	 * Essa função envia uma mensagem com o conjunto de pontos que acabou de ser atualizado 
 	 * para todos os observers cadastrados 
-	 */
+	 *//*
+
 	@Override
 	public void notifyObservers(int type) {
 		for (String ip : observers) {
@@ -527,13 +556,15 @@ public class Subject implements Observable {
 	}
 	
 	
-	/**
+	*/
+/**
 	 * USADA SOMENTE PELO MASTER
 	 * Essa função envia o conjunto de pontos atuais para o Observer que acabou de se registrar
 	 * @param ip => recebe como parâmetro o ip do Observer
 	 * @throws UnknownHostException
 	 * @throws IOException
-	 */
+	 *//*
+
 	private void notifyObserverJustRegistered(String ip) throws UnknownHostException, IOException{
 		Socket s = new Socket(ip,port);
 		
@@ -549,11 +580,13 @@ public class Subject implements Observable {
 	}
 
 	
-	/**
+	*/
+/**
 	 * USADA SOMENTE PELO MASTER
 	 * Essa função sorteia aleatóriamente um número de pontos a serem inseridos no cojunto de pontos já existente
 	 * @return a quantidade de pontos a serem inseridos
-	 */
+	 *//*
+
 	public static int getNumPointToChange() {
 		int n = maximum - minimum + 1;
 		int i = random.nextInt() % n;
@@ -562,14 +595,17 @@ public class Subject implements Observable {
 	}
 
 	
-	/**
+	*/
+/**
 	 * USADA SOMENTE PELO MASTER
 	 * Essa função sorteia aleatóriamente um número de pontos para serem removidos do conjunto já existente
 	 * @return a quantidade de pontos a serem removidos
-	 */
+	 *//*
+
 	public static int getNumPointToRemove() {
 		int randomNum = random.nextInt(numPoints);
 		return Math.abs(randomNum);
 	}
 	
 }
+*/
