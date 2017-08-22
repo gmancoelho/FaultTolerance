@@ -124,9 +124,10 @@ public class Clone_Subject implements Observable {
 				while((System.currentTimeMillis() - timeLastMessageMaster) < 950);
 				System.out.println("O master caiu!");
 				try {
-					if (InetAddress.getLocalHost().getHostAddress().equals(clones.get(1))) {
+					if (InetAddress.getLocalHost().getHostAddress().equals(clones.get(0))) {
 						clones.remove(0);
-						sendMessageToClone(0, clones.get(0));
+						if (clones.size() > 0)
+							sendMessageToClone(CloneMessage.NEW, clones.get(0));
 						startNewMaster();
 					}
 				} catch (Exception e) {
@@ -166,6 +167,8 @@ public class Clone_Subject implements Observable {
 						Thread.sleep(seg);
 						changePoints();
 						sendMessageToClone(CloneMessage.SAVE,null);
+						if (observers.size() != 0)
+							myInstance.notifyObservers(UPDATE);
 					}
 
 				} catch (InterruptedException e) {
@@ -389,7 +392,9 @@ public class Clone_Subject implements Observable {
 				synchronized (clones) {
 					clones = message.getClones();
 				}
-				threadToCheckMaster.start();
+                if (clones.size() == 1) {
+                    threadToCheckMaster.start();
+                }
 				break;
 
 			case CloneMessage.ADD:
@@ -448,6 +453,7 @@ public class Clone_Subject implements Observable {
 				//cloneIp = message.getCloneIp();
 //				System.out.println(cloneIp + " é o clone agora!");
 				clones.add(message.getCloneIp());
+				System.out.println("Adicionado o clone: " + message.getCloneIp());
 				sendMessageToClone(CloneMessage.NEW,clones.get(0));
 
 				break;
@@ -513,7 +519,10 @@ public class Clone_Subject implements Observable {
 //			if (cloneIp == null)
 			if (clones.isEmpty())
 				throw new IOException();
-			for (String cloneIp : clones) {
+			Iterator<String> iterator = clones.iterator();
+			while (iterator.hasNext()) {
+				String cloneIp = iterator.next();
+
 				s = new Socket(cloneIp, port);
 				CloneMessage message = new CloneMessage();
 

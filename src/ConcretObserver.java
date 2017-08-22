@@ -25,6 +25,7 @@ public class ConcretObserver {
 	private static Frame 				frame;
 
 	public ConcretObserver() throws IOException{
+
 		serverSocket 		= new ServerSocket(port);
 		points 				= Collections.synchronizedList(new ArrayList<Point>());
 		masterIp			= null;
