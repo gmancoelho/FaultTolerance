@@ -124,7 +124,7 @@ public class Clone_Subject implements Observable {
 				while((System.currentTimeMillis() - timeLastMessageMaster) < 950);
 				System.out.println("O master caiu!");
 				try {
-					if (InetAddress.getLocalHost().getHostAddress().equals(clones.get(1))) {
+					if (InetAddress.getLocalHost().getHostAddress().equals(clones.get(0))) {
 						clones.remove(0);
 						sendMessageToClone(0, clones.get(0));
 						startNewMaster();
@@ -389,7 +389,11 @@ public class Clone_Subject implements Observable {
 				synchronized (clones) {
 					clones = message.getClones();
 				}
-				threadToCheckMaster.start();
+
+				if (clones.size() == 1) {
+					threadToCheckMaster.start();
+				}
+
 				break;
 
 			case CloneMessage.ADD:

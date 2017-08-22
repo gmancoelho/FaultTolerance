@@ -442,7 +442,7 @@ public class Subject implements Observable {
 			
 			CloneMessage message = new CloneMessage();
 
-			switch(type){	
+			switch(type){
 				case CloneMessage.NEW: 		message.setType(CloneMessage.NEW);
 											message.setPoints(points);
 											message.setObservers(observers);
