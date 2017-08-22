@@ -120,9 +120,16 @@ public class ConcretObserver {
 						SubjectMessage message = (SubjectMessage) in.readObject();
 
 						int type = message.getType();
-
-						List<Point> newPoints = message.getPoints();
-						update(type,newPoints);
+						System.out.print(" - tipo: " + type);
+						switch (type) {
+							case 0:
+								List<Point> newPoints = message.getPoints();
+								update(type,newPoints);
+								break;
+							case 1:
+								masterIp = message.getIp();
+								break;
+						}
 
 						socket.close();
 					} catch (IOException | ClassNotFoundException e) {
