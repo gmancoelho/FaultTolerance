@@ -119,7 +119,7 @@ public class ConcretObserver {
 						SubjectMessage message = (SubjectMessage) in.readObject();
 
 						int type = message.getType();
-
+						System.out.print(" - tipo: " + type);
 						switch (type) {
 							case 0:
 								List<Point> newPoints = message.getPoints();
